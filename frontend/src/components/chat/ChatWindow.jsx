@@ -72,11 +72,11 @@ const {Title} = Typography;
 const rolesConfig = {
   user: {
     placement: "end",
-    avatar: <Avatar icon={<UserOutlined />} style={{ background: "#6083b4ff" }} />,
+    avatar: <Avatar icon={<UserOutlined />} style={{ background: "#a6c7f5ff" }} />,
   },
   assistant: {
     placement: "start",
-    avatar: <Avatar icon={<RobotOutlined />} style={{ background: "#83b06dff" }} />,
+    avatar: <Avatar icon={<RobotOutlined />} style={{ background: "#b1dd9aff" }} />,
   },
 };
 

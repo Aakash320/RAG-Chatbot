@@ -37,9 +37,8 @@ export default function DocumentPage() {
   };
 
   return (
-    // <Space direction="vertical" size={24} style={{ width: "100%" }}>
     <>
-      <Card>
+      <Card style={{borderRadius: 0, border: "none"}}>
         <Title level={5}>Ingest a document</Title>
         <Paragraph type="secondary">
           Upload files to make them searchable by the chat assistant.
@@ -47,7 +46,7 @@ export default function DocumentPage() {
         <DocumentUploader onIngested={handleIngested} />
       </Card>
 
-      <Card>
+      <Card style={{borderRadius: 0, border: "none"}}>
         <Title level={5}>Ingested documents</Title>
         <DocumentList
           documents={documents}
@@ -56,6 +55,5 @@ export default function DocumentPage() {
         />
       </Card>
     </>
-    /* </Space> */
   );
 }

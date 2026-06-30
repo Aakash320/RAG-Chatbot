@@ -63,7 +63,7 @@ export default function ChatPage() {
 
   return (
     <Card
-      style={{ height: "calc(100vh - 70px)" }}
+      style={{ height: "calc(100vh - 70px)", borderRadius: 0, border: "none" }}
       // style={{ height: "100vh" }}
       styles={{
         body: {

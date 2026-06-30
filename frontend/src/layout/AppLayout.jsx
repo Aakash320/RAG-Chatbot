@@ -31,7 +31,7 @@ export default function AppLayout({ children }) {
             paddingInline: 20,
           }}
         >
-<RobotFilled style={{ fontSize: 18, background: "#a0d9f4ff", borderRadius: "20px", padding: "10px" , marginLeft: 0, marginTop: 0, }} />
+        <RobotFilled style={{ fontSize: 18, background: "#cae5fdff", borderRadius: "20px", padding: "10px" , marginLeft: 0, marginTop: 0, }} />
             {/* <Title level={5} style={{ margin: 0, padding:0 }}>
               RAG Chatbot
             </Title> */}
@@ -48,19 +48,18 @@ export default function AppLayout({ children }) {
         <Header
           style={{
             background: "#fff",
-            // borderBottom: "1px solid #f0f0f0",
-            border: "none",
+            borderLeft: "1px solid #f2f2f2ff",
+            // border: "none",
             display: "flex",
             alignItems: "center",
             paddingInline: 24,
             marginLeft: 5,
-            borderRadius: 8,
           }}
         >
           {/* <Typography.Text strong>
             {menuItems.find((item) => item.key === selectedKey)?.label}
           </Typography.Text> */}
-          <Title level={5} style={{ marginTop: 5, padding:0 }}>
+          <Title level={5} style={{ marginTop: 5 }}>
             RAG Chatbot
           </Title>
         </Header>
