@@ -31,6 +31,14 @@ class ChromaVectorStore(BaseVectorStore):
             metadata={"hnsw:space": "cosine"},
         )
 
+        space = (self._collection.metadata or {}).get("hnsw:space", "l2")
+        if space != "cosine":
+            raise RuntimeError(
+                f"Chroma collection '{collection_name}' already exists with "
+                f"space='{space}', but similarity_search() assumes cosine distance. "
+                "Delete the collection/persist dir or fix the scoring formula."
+            )
+
     def add_documents(self, chunks: list[Chunk], embeddings: list[list[float]]) -> None:
         if not chunks:
             return

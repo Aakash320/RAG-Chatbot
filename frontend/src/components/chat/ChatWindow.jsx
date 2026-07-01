@@ -1,63 +1,6 @@
-// import React from "react";
-// import { Bubble } from "@ant-design/x";
-// import { Avatar, Empty } from "antd";
-// import { UserOutlined, RobotOutlined } from "@ant-design/icons";
-
-// const rolesConfig = {
-//   user: {
-//     placement: "end",
-//     avatar: <Avatar icon={<UserOutlined />} style={{ background: "#6083b4ff" }} />,
-//   },
-//   assistant: {
-//     placement: "start",
-//     avatar: <Avatar icon={<RobotOutlined />} style={{ background: "#83b06dff" }} />,
-//   },
-// };
-
-// /**
-//  * ChatWindow renders the scrollable list of chat bubbles.
-//  *
-//  * Expected `messages` shape:
-//  * [{ key: string, role: "user" | "assistant", content: string, loading?: boolean }]
-//  */
-// export default function ChatWindow({ messages }) {
-//   if (!messages || messages.length === 0) {
-//     return (
-//       <div
-//         style={{
-//           height: "100%",
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "center",
-//         }}
-//       >
-//         <Empty
-//           image={Empty.PRESENTED_IMAGE_SIMPLE} 
-//           description="Say hello to start the conversation" 
-//         />
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <Bubble.List
-//       style={{ height: "100%" }}
-//       role={rolesConfig}
-//       items={messages.map((message) => ({
-//         key: message.key,
-//         role: message.role,
-//         content: message.content,
-//         loading: message.loading,
-//       }))}
-//     />
-//   );
-// }
-
-
-
 import React from "react";
 import { Bubble, Prompts } from "@ant-design/x";
-import { Avatar, Empty, Flex, Typography } from "antd";
+import { Avatar, Empty, Flex, Typography, Tag, Space } from "antd";
 import {
   UserOutlined,
   RobotOutlined,
@@ -142,6 +85,26 @@ const DESIGN_GUIDE = {
  * `onPromptSelect` (optional): called with the prompt text when a user clicks
  * a Hot Topics / Tips card in the empty state.
  */
+
+function MessageContent({ message }) {
+  if (message.loading) return message.content;
+  return (
+    <div>
+      <div>{message.content}</div>
+      {message.sources?.length > 0 && (
+        <Space size={[4, 4]} wrap style={{ marginTop: 8 }}>
+          {message.sources.map((source, idx) => (
+            <Tag key={idx} title={source.text}>
+              {source.source_file} · {Math.round(source.score * 100)}%
+            </Tag>
+          ))}
+        </Space>
+      )}
+    </div>
+  );
+}
+
+
 export default function ChatWindow({ messages, onPromptSelect }) {
   if (!messages || messages.length === 0) {
     return (
@@ -201,7 +164,7 @@ export default function ChatWindow({ messages, onPromptSelect }) {
       items={messages.map((message) => ({
         key: message.key,
         role: message.role,
-        content: message.content,
+        content: <MessageContent message={message} />,
         loading: message.loading,
       }))}
     />

@@ -12,6 +12,7 @@ import logging
 
 from app.services.llm_service import LLMService
 from app.services.retrieval_service import RetrievalService
+from app.core.exceptions import RetrievalError
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,11 @@ class ChatController:
             "sources": [{"text": str, "source_file": str, "score": float}, ...]
         }
         """
-        chunks = self._retrieval.retrieve(query, top_k=top_k, document_id=document_id)
+        try:
+            chunks = self._retrieval.retrieve(query, top_k=top_k, document_id=document_id)
+        except Exception as exc:
+            logger.exception("Retrieval failed for query")
+            raise RetrievalError(str(exc)) from exc
 
         if not chunks:
             return {

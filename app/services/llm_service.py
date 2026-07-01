@@ -14,6 +14,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
 from app.config import settings
+from app.core.exceptions import LLMGenerationError
+import logging
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a helpful assistant that answers questions using ONLY the \
 provided context. If the answer cannot be found in the context, say you don't know — \
@@ -48,10 +52,18 @@ class LLMService:
         self._chain = self._prompt | self._llm | StrOutputParser()
 
     def generate_answer(self, question: str, context: str) -> str:
-        return self._chain.invoke({"question": question, "context": context})
+        try:
+            return self._chain.invoke({"question": question, "context": context})
+        except Exception as exc:
+            logger.exception("LLM generation failed")
+            raise LLMGenerationError("The language model failed to generate a response") from exc
 
     async def agenerate_answer(self, question: str, context: str) -> str:
-        return await self._chain.ainvoke({"question": question, "context": context})
+        try:
+            return await self._chain.ainvoke({"question": question, "context": context})
+        except Exception as exc:
+            logger.exception("LLM generation failed")
+            raise LLMGenerationError("The language model failed to generate a response") from exc
 
 
 @lru_cache

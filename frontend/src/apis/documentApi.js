@@ -2,70 +2,40 @@ import httpClient from "./httpClient";
 
 /**
  * Document API
- * Backend routes: GET /document, POST /document, DELETE /document
+ * Backend routes: GET /documents, POST /documents, DELETE /documents/{document_id}
+ *
+ * All functions return the backend response body as-is — same field
+ * names as the backend (document_id, filename, file_type, chunk_count).
+ * No remapping/renaming happens here.
  */
 
 /**
  * List ingested documents.
- * TODO: replace this placeholder with the real implementation, e.g.:
- *
- * export async function listDocuments(params) {
- *   const { data } = await httpClient.get("/document", { params });
- *   return data;
- * }
- *
- * Expected response shape (suggested):
- * {
- *   documents: [
- *     { id: string, name: string, status: "processing" | "ready" | "failed",
- *       sizeBytes: number, createdAt: string }
- *   ]
- * }
+ * Backend response: { documents: [{ document_id, filename, file_type, chunk_count }], total }
  */
-export async function listDocuments(params) {
-  // PLACEHOLDER: no real API call yet.
-  console.warn("[apis/document] listDocuments() is a placeholder — wire up GET /document");
-  return Promise.resolve({ documents: [] });
+export async function listDocuments() {
+  const { data } = await httpClient.get("/documents");
+  return data;
 }
 
 /**
  * Ingest (upload) a new document.
- * TODO: replace this placeholder with the real implementation, e.g.:
- *
- * export async function ingestDocument(file, onUploadProgress) {
- *   const formData = new FormData();
- *   formData.append("file", file);
- *   const { data } = await httpClient.post("/document", formData, {
- *     headers: { "Content-Type": "multipart/form-data" },
- *     onUploadProgress,
- *   });
- *   return data;
- * }
+ * Backend response: { document_id, filename, file_type, chunk_count }
  */
-export async function ingestDocument(file, onUploadProgress) {
-  // PLACEHOLDER: simulate a network delay instead of a real upload.
-  console.warn("[apis/document] ingestDocument() is a placeholder — wire up POST /document");
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return {
-    id: `placeholder-${Date.now()}`,
-    name: file?.name ?? "untitled",
-    status: "processing",
-    sizeBytes: file?.size ?? 0,
-    createdAt: new Date().toISOString(),
-  };
+export async function ingestDocument(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await httpClient.post("/documents", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
 }
 
 /**
  * Delete a document by id.
- * TODO: replace this placeholder with the real implementation, e.g.:
- *
- * export async function deleteDocument(documentId) {
- *   const { data } = await httpClient.delete(`/document/${documentId}`);
- *   return data;
- * }
+ * Backend response: { document_id, deleted }
  */
 export async function deleteDocument(documentId) {
-  // PLACEHOLDER: no real API call yet.
-  console.warn("[apis/document] deleteDocument() is a placeholder — wire up DELETE /document");
-  return Promise.resolve({ id: documentId, deleted: true });
+  const { data } = await httpClient.delete(`/documents/${documentId}`);
+  return data;
 }

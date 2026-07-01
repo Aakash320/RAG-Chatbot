@@ -22,6 +22,7 @@ from langchain_community.document_loaders import (
 from langchain_core.documents import Document
 
 from app.config import settings
+from app.core.exceptions import UnsupportedFileTypeError
 from app.vectorstores.base import Chunk
 
 _LOADER_MAP = {
@@ -35,6 +36,12 @@ _LOADER_MAP = {
 # Imported by the API layer and the bulk-ingest script for validation.
 SUPPORTED_EXTENSIONS = frozenset(_LOADER_MAP)
 
+def _sanitize_metadata(metadata: dict) -> dict:
+    """Chroma metadata values must be str/int/float/bool/None — coerce anything else."""
+    clean = {}
+    for k, v in metadata.items():
+        clean[k] = v if isinstance(v, (str, int, float, bool)) or v is None else str(v)
+    return clean
 
 class IngestionService:
     def __init__(
@@ -47,20 +54,21 @@ class IngestionService:
             chunk_overlap=chunk_overlap,
         )
 
-    def load_file(self, file_path: str) -> list[Document]:
+    def load_file(self, file_path: str, filename: str | None = None) -> list[Document]:
         """Load a single file into LangChain Documents using the right loader."""
         path = Path(file_path)
         extension = path.suffix.lower()
 
         loader_cls = _LOADER_MAP.get(extension)
         if loader_cls is None:
-            raise ValueError(f"Unsupported file extension: {extension}")
+            raise UnsupportedFileTypeError(extension)
 
         loader = loader_cls(str(path))
         documents = loader.load()
 
+        source_name = filename or path.name
         for doc in documents:
-            doc.metadata["source_file"] = path.name
+            doc.metadata["source_file"] = source_name
             doc.metadata["file_type"] = extension.lstrip(".")
 
         return documents
@@ -76,14 +84,16 @@ class IngestionService:
         chunks: list[Chunk] = []
         for i, doc in enumerate(split_docs):
             chunk_id = f"{document_id}_chunk_{i}_{uuid.uuid4().hex[:8]}"
-            metadata = {**doc.metadata, "document_id": document_id, "chunk_index": i}
+            metadata = _sanitize_metadata(
+                {**doc.metadata, "document_id": document_id, "chunk_index": i}
+            )
             chunks.append(Chunk(id=chunk_id, text=doc.page_content, metadata=metadata))
 
         return chunks
 
-    def load_and_chunk(self, file_path: str, document_id: str) -> list[Chunk]:
+    def load_and_chunk(self, file_path: str, document_id: str, filename: str | None = None) -> list[Chunk]:
         """Convenience method: load a file and chunk it in one call."""
-        documents = self.load_file(file_path)
+        documents = self.load_file(file_path, filename=filename)
         return self.chunk_documents(documents, document_id)
 
     def load_folder(self, folder_path: str) -> list[Document]:

@@ -1,45 +1,27 @@
 import React, { useState } from "react";
-import { Table, Tag, Button, Popconfirm, message, Typography } from "antd";
+import { Table, Button, Popconfirm, message, Typography } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { deleteDocument } from "../../apis/documentApi";
+import { getErrorMessage } from "../../apis/httpClient";
 
 const { Text } = Typography;
 
-const statusColors = {
-  processing: "blue",
-  ready: "green",
-  failed: "red",
-};
-
-function formatBytes(bytes) {
-  if (!bytes) return "—";
-  const units = ["B", "KB", "MB", "GB"];
-  let value = bytes;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
-  }
-  return `${value.toFixed(1)} ${units[unitIndex]}`;
-}
-
 /**
  * DocumentList renders ingested documents in a table with a delete action.
- * `documents` items are expected to look like:
- * { id, name, status, sizeBytes, createdAt }
+ * `documents` items match the backend's DocumentMetadata shape exactly:
+ * { document_id, filename, file_type, chunk_count }
  */
 export default function DocumentList({ documents, onDeleted, loading }) {
   const [deletingId, setDeletingId] = useState(null);
 
   const handleDelete = async (record) => {
-    setDeletingId(record.id);
+    setDeletingId(record.document_id);
     try {
-      // TODO: deleteDocument() in apis/documentApi.js is currently a placeholder.
-      await deleteDocument(record.id);
-      message.success(`${record.name} deleted`);
-      onDeleted?.(record.id);
+      await deleteDocument(record.document_id);
+      message.success(`${record.filename} deleted`);
+      onDeleted?.(record.document_id);
     } catch (error) {
-      message.error(`Failed to delete ${record.name}`);
+      message.error(getErrorMessage(error, `Failed to delete ${record.filename}`));
     } finally {
       setDeletingId(null);
     }
@@ -48,32 +30,22 @@ export default function DocumentList({ documents, onDeleted, loading }) {
   const columns = [
     {
       title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name) => <Text strong>{name}</Text>,
+      dataIndex: "filename",
+      key: "filename",
+      render: (filename) => <Text strong>{filename}</Text>,
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: 140,
-      render: (status) => (
-        <Tag color={statusColors[status] ?? "default"}>{status ?? "unknown"}</Tag>
-      ),
+      title: "Type",
+      dataIndex: "file_type",
+      key: "file_type",
+      width: 100,
     },
     {
-      title: "Size",
-      dataIndex: "sizeBytes",
-      key: "sizeBytes",
-      width: 120,
-      render: formatBytes,
-    },
-    {
-      title: "Uploaded",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 200,
-      render: (value) => (value ? new Date(value).toLocaleString() : "—"),
+      title: "Chunks",
+      dataIndex: "chunk_count",
+      key: "chunk_count",
+      width: 100,
+      render: (count) => (count != null ? count : "—"),
     },
     {
       title: "",
@@ -91,7 +63,7 @@ export default function DocumentList({ documents, onDeleted, loading }) {
             danger
             type="text"
             icon={<DeleteOutlined />}
-            loading={deletingId === record.id}
+            loading={deletingId === record.document_id}
           />
         </Popconfirm>
       ),
@@ -100,7 +72,7 @@ export default function DocumentList({ documents, onDeleted, loading }) {
 
   return (
     <Table
-      rowKey="id"
+      rowKey="document_id"
       columns={columns}
       dataSource={documents}
       loading={loading}

@@ -6,6 +6,7 @@ from app.api.deps import get_document_controller
 from app.controllers.document_controller import DocumentController
 from typing import Annotated
 from app.models.schemas import DocumentUploadResponse, DocumentListResponse, DocumentMetadata, DocumentDeleteResponse
+from app.core.exceptions import VectorStoreError
 from pathlib import Path
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -17,26 +18,27 @@ async def upload_document(
     file: UploadFile,
     controller: Annotated[DocumentController, Depends(get_document_controller)],
 ) -> DocumentUploadResponse:
-    document_id, file_path = await save_upload(file)
+    file_path, document_id, filename, extension = await save_upload(file)
 
     try:
-        chunk_count = controller.ingest_document(file_path=file_path, document_id=document_id)
+        return controller.ingest_document(
+            file_path=file_path,
+            document_id=document_id,
+            filename=filename,
+            file_type=extension.lstrip("."),
+        )
     finally:
         Path(file_path).unlink(missing_ok=True)
-
-    return DocumentUploadResponse(
-        document_id=document_id,
-        filename=file.filename or document_id,
-        chunk_count=chunk_count,
-        status="ingested",
-    )
 
 
 @router.get("", response_model = DocumentListResponse)
 def list_documents(
     vector_store: Annotated[BaseVectorStore, Depends(get_vector_store)]
 ) -> DocumentListResponse:
-    docs = vector_store.list_documents()
+    try:
+        docs = vector_store.list_documents()
+    except Exception as exc:
+        raise VectorStoreError(str(exc)) from exc
     return DocumentListResponse(
         documents = [DocumentMetadata(**d) for d in docs],
         total = len(docs),

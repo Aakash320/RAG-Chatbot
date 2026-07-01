@@ -11,7 +11,8 @@ def validate_extension(filename: str = ""):
     return extension
 
 async def save_upload(file: UploadFile, document_id: str|None = None):
-    extension = validate_extension(file.filename or "")
+    filename = file.filename
+    extension = validate_extension(filename or "")
     document_id = document_id or str(uuid.uuid4())
 
     upload_dir = Path(settings.UPLOAD_DIR)
@@ -31,4 +32,4 @@ async def save_upload(file: UploadFile, document_id: str|None = None):
                 raise FileTooLargeError(settings.MAX_UPLOAD_SIZE_MB)
             out_file.write(chunk)
 
-    return document_id, str(dest_path)
+    return str(dest_path), document_id, filename, extension

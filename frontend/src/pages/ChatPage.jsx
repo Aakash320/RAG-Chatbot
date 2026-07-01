@@ -4,6 +4,7 @@ import ChatWindow from "../components/chat/ChatWindow";
 import ChatSender from "../components/chat/ChatSender";
 import { Typography } from "antd";
 import { sendChatMessage } from "../apis/chatApi";
+import { getErrorMessage } from "../apis/httpClient";
 import { RobotOutlined, RobotFilled } from "@ant-design/icons";
 
 const {Title} = Typography
@@ -28,19 +29,12 @@ export default function ChatPage() {
     setIsSending(true);
 
     try {
-      // TODO: sendChatMessage() in apis/chatApi.js is currently a placeholder for POST /chat.
-      const reply = await sendChatMessage(text);
-      // const reply = {
-      //   id: `placeholder-${Date.now()}`,
-      //   role: "assistant",
-      //   content: "This is a placeholder AI response. Connect the real chat API to replace this.",
-      //   createdAt: new Date().toISOString(),
-      // }
+      const { answer, sources } = await sendChatMessage(text);
 
       setMessages((prev) =>
         prev.map((message) =>
           message.key === loadingMessage.key
-            ? { key: reply.id ?? nextKey(), role: "assistant", content: reply.content }
+            ? { key: nextKey(), role: "assistant", content: answer, sources }
             : message
         )
       );
@@ -51,7 +45,10 @@ export default function ChatPage() {
             ? {
                 ...message,
                 loading: false,
-                content: "Something went wrong getting a response. Please try again.",
+                content: getErrorMessage(
+                  error,
+                  "Something went wrong getting a response. Please try again."
+                ),
               }
             : message
         )
@@ -63,7 +60,7 @@ export default function ChatPage() {
 
   return (
     <Card
-      style={{ height: "calc(100vh - 70px)", borderRadius: 0, border: "none" }}
+      style={{ height: "calc(100vh - 70px)", borderRadius: 0, }}
       // style={{ height: "100vh" }}
       styles={{
         body: {

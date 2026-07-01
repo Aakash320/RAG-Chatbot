@@ -8,7 +8,9 @@ stack traces.
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+import logging
 
+logger = logging.getLogger(__name__)
 
 class AppError(Exception):
     """Base class for all application-specific errors."""
@@ -44,7 +46,21 @@ class LLMGenerationError(AppError):
         super().__init__(f"LLM generation failed: {detail}", status_code=502)
 
 
+class VectorStoreError(AppError):
+    def __init__(self, detail: str) -> None:
+        super().__init__(f"Vector store operation failed: {detail}", status_code=500)
+
+
+class RetrievalError(AppError):
+    def __init__(self, detail: str) -> None:
+        super().__init__(f"Retrieval failed: {detail}", status_code=500)
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
+    @app.exception_handler(Exception)
+    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})

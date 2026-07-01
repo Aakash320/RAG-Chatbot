@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Upload, Button, message } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import { ingestDocument } from "../../apis/documentApi";
+import { getErrorMessage } from "../../apis/httpClient";
 
 const { Dragger } = Upload;
 
@@ -20,7 +21,7 @@ export default function DocumentUploader({ onIngested }) {
       message.success(`${file.name} ingested`);
       onIngested?.(record);
     } catch (error) {
-      message.error(`${file.name} failed to ingest`);
+      message.error(getErrorMessage(error, `${file.name} failed to ingest`));
     } finally {
       setUploading(false);
     }
@@ -35,6 +36,7 @@ export default function DocumentUploader({ onIngested }) {
       showUploadList={false}
       beforeUpload={handleUpload}
       disabled={uploading}
+      accept=".pdf,.docx,.txt,.md"
     >
       <p className="ant-upload-drag-icon">
         <InboxOutlined />
