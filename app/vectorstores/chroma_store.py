@@ -68,8 +68,11 @@ class ChromaVectorStore(BaseVectorStore):
         distances = results.get("distances", [[]])[0]
 
         for id_, doc, meta, dist in zip(ids, documents, metadatas, distances):
-            # cosine distance is in [0, 2]; convert to a 0-1 similarity score
-            similarity = 1 - (dist / 2)
+            # Chroma cosine distance = 1 - cosine_similarity, so this recovers
+            # the true cosine similarity. Clamp at 0 instead of rescaling —
+            # rescaling (e.g. (1 + cos_sim) / 2) artificially inflates every
+            # score and creates a misleading high "floor" for unrelated text.
+            similarity = max(0.0, 1 - dist)
             retrieved.append(
                 RetrievedChunk(id=id_, text=doc, metadata=meta or {}, score=similarity)
             )

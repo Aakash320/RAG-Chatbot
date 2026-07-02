@@ -18,10 +18,12 @@ class RetrievalService:
         vector_store: BaseVectorStore,
         embedding_service: EmbeddingService,
         top_k: int = settings.RETRIEVAL_TOP_K,
+        similarity_threshold: float = settings.SIMILARITY_THRESHOLD,
     ) -> None:
         self._vector_store = vector_store
         self._embedding_service = embedding_service
         self._top_k = top_k
+        self._similarity_threshold = similarity_threshold
 
     def retrieve(
         self,
@@ -33,11 +35,18 @@ class RetrievalService:
 
         filter_ = {"document_id": document_id} if document_id else None
 
-        return self._vector_store.similarity_search(
+        chunks = self._vector_store.similarity_search(
             query_embedding=query_embedding,
             top_k=top_k or self._top_k,
             filter=filter_,
         )
+
+        # Discard chunks that aren't actually relevant — Chroma always
+        # returns up to `top_k` nearest matches even if none of them are
+        # meaningfully similar to the query (e.g. a nonsense query still
+        # gets back the "closest" chunks in the store, just with low scores).
+        # return [c for c in chunks if c.score >= self._similarity_threshold]
+        return [c for c in chunks if c.score >= 0]
 
     @staticmethod
     def format_context(chunks: list[RetrievedChunk]) -> str:

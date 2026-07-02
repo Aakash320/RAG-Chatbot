@@ -37,6 +37,10 @@ class Settings(BaseSettings):
 
     # --- Retrieval ---
     RETRIEVAL_TOP_K: int = 4
+    # Chunks with a similarity score below this are treated as irrelevant
+    # and discarded before being used as chat context. Score range is 0-1
+    # (see ChromaVectorStore.similarity_search).
+    SIMILARITY_THRESHOLD: float = 0.35
 
     # --- Chroma vector store ---
     CHROMA_PERSIST_DIR: str = "data/chroma_db"
