@@ -45,8 +45,7 @@ class RetrievalService:
         # returns up to `top_k` nearest matches even if none of them are
         # meaningfully similar to the query (e.g. a nonsense query still
         # gets back the "closest" chunks in the store, just with low scores).
-        # return [c for c in chunks if c.score >= self._similarity_threshold]
-        return [c for c in chunks if c.score >= 0]
+        return [c for c in chunks if c.score >= self._similarity_threshold]
 
     @staticmethod
     def format_context(chunks: list[RetrievedChunk]) -> str:

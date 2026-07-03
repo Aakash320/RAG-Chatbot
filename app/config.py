@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     )
 
     # --- App / API ---
-    APP_NAME: str = "RAG API"
+    APP_NAME: str = "RAG Chatbot"
     API_V1_PREFIX: str = "/api/v1"
     # JSON list in .env, e.g. CORS_ORIGINS=["http://localhost:5173"]
     CORS_ORIGINS: list[str] = ["*"]
