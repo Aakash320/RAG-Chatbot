@@ -24,7 +24,7 @@ from app.config import settings
 from app.core.exceptions import LLMGenerationError
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("rag.llm")
 
 SYSTEM_PROMPT = """You are a helpful assistant that answers questions using ONLY the \
 provided context. If the answer cannot be found in the context, say you don't know — \
@@ -100,8 +100,11 @@ class LLMService:
         self._rewrite_chain = self._rewrite_prompt | self._llm | StrOutputParser()
 
     def generate_answer(self, question: str, context: str) -> str:
+        logger.info("Calling LLM to generate final answer (context length=%d chars)", len(context))
         try:
-            return self._chain.invoke({"question": question, "context": context})
+            answer = self._chain.invoke({"question": question, "context": context})
+            logger.info("LLM answer received (%d chars)", len(answer))
+            return answer
         except Exception as exc:
             logger.exception("LLM generation failed")
             raise LLMGenerationError("The language model failed to generate a response") from exc
@@ -114,6 +117,7 @@ class LLMService:
             raise LLMGenerationError("The language model failed to generate a response") from exc
 
     def detect_followup_intent(self, query: str, chat_history: list[dict]) -> bool:
+        logger.info("Calling LLM intent classifier (%d history turns)", len(chat_history))
         try:
             result = self._intent_chain.invoke(
                 {"query": query, "chat_history": _format_chat_history(chat_history)}
@@ -121,16 +125,20 @@ class LLMService:
         except Exception as exc:
             logger.exception("Intent detection failed")
             raise LLMGenerationError("Intent detection failed") from exc
+        logger.info("Raw intent classifier output: %r", result.strip())
         return result.strip().upper().startswith("FOLLOWUP")
 
     def rewrite_query(self, query: str, chat_history: list[dict]) -> str:
+        logger.info("Calling LLM to rewrite follow-up query: %r", query)
         try:
-            return self._rewrite_chain.invoke(
+            rewritten = self._rewrite_chain.invoke(
                 {"query": query, "chat_history": _format_chat_history(chat_history)}
             ).strip()
         except Exception as exc:
             logger.exception("Query rewrite failed")
             raise LLMGenerationError("Query rewrite failed") from exc
+        logger.info("LLM rewrite output: %r", rewritten)
+        return rewritten
 
 
 @lru_cache

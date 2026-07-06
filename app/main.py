@@ -8,7 +8,6 @@ Build steps (services, controllers, vector store) happen once during the
 lifespan startup, not at import time, so importing this module stays cheap.
 """
 
-import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -18,8 +17,9 @@ from app.api.routes import router
 from app.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.state import build_app_state
+from app.core.logging_config import setup_logging
 
-logging.basicConfig(level=logging.INFO)
+setup_logging()
 
 
 @asynccontextmanager

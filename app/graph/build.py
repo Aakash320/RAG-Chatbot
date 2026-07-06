@@ -15,6 +15,7 @@ follow-up, `rewrite_query` runs before `retrieve`; otherwise `retrieve`
 runs directly.
 """
 
+import logging
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
@@ -30,7 +31,13 @@ from app.services.retrieval_service import RetrievalService
 
 
 def route_after_intent(state: RAGState) -> str:
-    return "rewrite_query" if state.get("is_followup") else "retrieve"
+    next_node = "rewrite_query" if state.get("is_followup") else "retrieve"
+    logging.getLogger("rag.graph").info(
+        "ROUTING DECISION -> is_followup=%s -> next node: %s",
+        state.get("is_followup"),
+        next_node,
+    )
+    return next_node
 
 
 def build_rag_graph(
