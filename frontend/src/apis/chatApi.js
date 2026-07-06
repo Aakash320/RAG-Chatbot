@@ -9,12 +9,13 @@ import httpClient from "./httpClient";
  * Send a chat message to the RAG backend and return the AI answer.
  *
  * @param {string} query - The user's question.
+ * @param {{role: "user"|"assistant", content: string}[]} [chat_history] - Prior turns, oldest first.
  * @param {string|null} [document_id] - Optionally restrict retrieval to a single document.
  * @param {number|null} [top_k] - Number of source chunks to retrieve (1–20).
  * @returns {Promise<{answer: string, sources: {text: string, source_file: string, score: number}[]}>}
  */
-export async function sendChatMessage(query, document_id = null, top_k = null) {
-  const payload = { query };
+export async function sendChatMessage(query, chat_history = [], document_id = null, top_k = null) {
+  const payload = { query, chat_history };
   if (document_id !== null) payload.document_id = document_id;
   if (top_k !== null) payload.top_k = top_k;
 

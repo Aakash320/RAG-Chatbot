@@ -29,7 +29,13 @@ export default function ChatPage() {
     setIsSending(true);
 
     try {
-      const { answer, sources } = await sendChatMessage(text);
+      const HISTORY_WINDOW = 6; // last N turns sent to the backend
+      const chatHistory = messages
+        .filter((m) => !m.loading)
+        .slice(-HISTORY_WINDOW)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const { answer, sources } = await sendChatMessage(text, chatHistory);
 
       setMessages((prev) =>
         prev.map((message) =>

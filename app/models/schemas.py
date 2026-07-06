@@ -8,6 +8,7 @@ shapes can evolve independently.
 """
 
 from pydantic import BaseModel, Field
+from typing import Literal
 
 # --- Documents ---
 
@@ -44,6 +45,10 @@ class DocumentDeleteResponse(BaseModel):
 
 # --- Chat ---
 
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
 
 class ChatRequest(BaseModel):
     query: str = Field(..., min_length=1, description="The user's question")
@@ -51,6 +56,10 @@ class ChatRequest(BaseModel):
         default=None, description="Optionally restrict retrieval to a single document"
     )
     top_k: int | None = Field(default=None, ge=1, le=20)
+    chat_history: list[ChatMessage] = Field(
+        default_factory=list,
+        description="Prior conversation turns, oldest first, used for follow-up detection and query rewriting",
+    )
 
 
 class SourceChunk(BaseModel):

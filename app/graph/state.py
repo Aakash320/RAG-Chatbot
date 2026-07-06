@@ -21,6 +21,14 @@ class RAGState(TypedDict, total=False):
     query: str
     document_id: str | None
     top_k: int | None
+    chat_history: list[dict]  # [{"role": "user" | "assistant", "content": str}, ...]
+
+    # Set by the `detect_intent` node.
+    original_query: str
+    is_followup: bool
+
+    # `rewrite_query` overwrites `query` in place (no new key), so
+    # `retrieve` doesn't need to know whether a rewrite happened.
 
     # Set by the `retrieve` node.
     chunks: list[RetrievedChunk]

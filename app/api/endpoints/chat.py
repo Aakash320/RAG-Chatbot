@@ -11,4 +11,9 @@ def chat(
     request: ChatRequest,
     controller: Annotated[ChatController, Depends(get_chat_controller)],
 ) -> ChatResponse:
-    return ChatResponse(**controller.answer(request.query, request.document_id, request.top_k))
+    return ChatResponse(**controller.answer(
+        request.query,
+        request.document_id,
+        request.top_k,
+        chat_history=[m.model_dump() for m in request.chat_history],
+    ))

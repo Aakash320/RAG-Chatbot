@@ -31,6 +31,7 @@ class ChatController:
         query: str,
         document_id: str | None = None,
         top_k: int | None = None,
+        chat_history: list[dict] | None = None,
     ) -> dict:
         """
         Returns a dict shaped like:
@@ -40,6 +41,11 @@ class ChatController:
         }
         """
         result = self._graph.invoke(
-            {"query": query, "document_id": document_id, "top_k": top_k}
+            {
+                "query": query,
+                "document_id": document_id,
+                "top_k": top_k,
+                "chat_history": chat_history or [],
+            }
         )
         return {"answer": result["answer"], "sources": result["sources"]}
