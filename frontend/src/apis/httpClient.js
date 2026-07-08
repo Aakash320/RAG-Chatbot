@@ -3,7 +3,7 @@ import axios from "axios";
 // Base URL for the backend API.
 // TODO: point this at your real backend, e.g. via an env var:
 // const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-const BASE_URL = "/api/v1";
+export const BASE_URL = "/api/v1";
 
 const httpClient = axios.create({
   baseURL: BASE_URL,

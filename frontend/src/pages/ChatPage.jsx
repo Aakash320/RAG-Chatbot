@@ -2,12 +2,7 @@ import React, { useState } from "react";
 import { Card, Flex } from "antd";
 import ChatWindow from "../components/chat/ChatWindow";
 import ChatSender from "../components/chat/ChatSender";
-import { Typography } from "antd";
-import { sendChatMessage } from "../apis/chatApi";
-import { getErrorMessage } from "../apis/httpClient";
-import { RobotOutlined, RobotFilled } from "@ant-design/icons";
-
-const {Title} = Typography
+import { streamChatMessage } from "../apis/chatApi";
 
 let messageCounter = 0;
 const nextKey = () => `msg-${Date.now()}-${messageCounter++}`;
@@ -16,49 +11,66 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [isSending, setIsSending] = useState(false);
 
+  const updateAssistantMessage = (key, updater) => {
+    setMessages((prev) => prev.map((m) => (m.key === key ? updater(m) : m)));
+  };
+
   const handleSend = async (text) => {
     const userMessage = { key: nextKey(), role: "user", content: text };
-    const loadingMessage = {
-      key: nextKey(),
+    const assistantKey = nextKey();
+    const assistantMessage = {
+      key: assistantKey,
       role: "assistant",
-      content: "Thinking...",
+      content: "",
       loading: true,
+      done: false,
+      statusSteps: [],
     };
 
-    setMessages((prev) => [...prev, userMessage, loadingMessage]);
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setIsSending(true);
 
+    const HISTORY_WINDOW = 6;
+    const chatHistory = messages
+      .filter((m) => !m.loading)
+      .slice(-HISTORY_WINDOW)
+      .map((m) => ({ role: m.role, content: m.content }));
+
     try {
-      const HISTORY_WINDOW = 6; // last N turns sent to the backend
-      const chatHistory = messages
-        .filter((m) => !m.loading)
-        .slice(-HISTORY_WINDOW)
-        .map((m) => ({ role: m.role, content: m.content }));
-
-      const { answer, sources } = await sendChatMessage(text, chatHistory);
-
-      setMessages((prev) =>
-        prev.map((message) =>
-          message.key === loadingMessage.key
-            ? { key: nextKey(), role: "assistant", content: answer, sources }
-            : message
-        )
-      );
-    } catch (error) {
-      setMessages((prev) =>
-        prev.map((message) =>
-          message.key === loadingMessage.key
-            ? {
-                ...message,
-                loading: false,
-                content: getErrorMessage(
-                  error,
-                  "Something went wrong getting a response. Please try again."
-                ),
-              }
-            : message
-        )
-      );
+      await streamChatMessage(text, chatHistory, null, null, {
+        onStatus: (status) => {
+          updateAssistantMessage(assistantKey, (m) => ({
+            ...m,
+            loading: false,
+            statusSteps: [...(m.statusSteps || []), status],
+          }));
+        },
+        onToken: (delta) => {
+          updateAssistantMessage(assistantKey, (m) => ({
+            ...m,
+            loading: false,
+            content: m.content + delta,
+          }));
+        },
+        onDone: ({ answer, sources }) => {
+          updateAssistantMessage(assistantKey, (m) => ({
+            ...m,
+            loading: false,
+            done: true,
+            content: answer,
+            sources,
+          }));
+        },
+        onError: (detail) => {
+          updateAssistantMessage(assistantKey, (m) => ({
+            ...m,
+            loading: false,
+            done: true,
+            hasError: true,
+            content: detail,
+          }));
+        },
+      });
     } finally {
       setIsSending(false);
     }
@@ -66,8 +78,7 @@ export default function ChatPage() {
 
   return (
     <Card
-      style={{ height: "calc(100vh - 70px)", borderRadius: 0, }}
-      // style={{ height: "100vh" }}
+      style={{ height: "calc(100vh - 70px)", borderRadius: 0 }}
       styles={{
         body: {
           height: "100%",

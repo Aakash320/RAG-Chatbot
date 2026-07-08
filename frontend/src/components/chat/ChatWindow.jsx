@@ -11,6 +11,7 @@ import {
 } from "@ant-design/icons";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import MessageThoughtChain from "./MessageThoughtChain";
 
 const {Title} = Typography;
 
@@ -92,9 +93,16 @@ function MessageContent({ message }) {
   if (message.loading) return message.content;
   return (
     <div>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-        {message.content}
-      </ReactMarkdown>
+      <MessageThoughtChain
+        statusSteps={message.statusSteps}
+        hasFailed={!!message.hasError}
+        isComplete={!!message.done}
+      />
+      {message.content && (
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {message.content}
+        </ReactMarkdown>
+      )}
       {message.sources?.length > 0 && (
         <Space size={[4, 4]} wrap style={{ marginTop: 8 }}>
           {message.sources.map((source, idx) => (

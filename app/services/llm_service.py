@@ -110,8 +110,11 @@ class LLMService:
             raise LLMGenerationError("The language model failed to generate a response") from exc
 
     async def agenerate_answer(self, question: str, context: str) -> str:
+        logger.info("Calling LLM (async/streamed) to generate final answer (context length=%d chars)", len(context))
         try:
-            return await self._chain.ainvoke({"question": question, "context": context})
+            answer = await self._chain.ainvoke({"question": question, "context": context})
+            logger.info("LLM answer received (%d chars)", len(answer))
+            return answer
         except Exception as exc:
             logger.exception("LLM generation failed")
             raise LLMGenerationError("The language model failed to generate a response") from exc

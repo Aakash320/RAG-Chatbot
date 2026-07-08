@@ -100,7 +100,7 @@ def make_retrieve_node(retrieval_service: RetrievalService) -> Callable[[RAGStat
 
 def make_generate_node(llm_service: LLMService) -> Callable[[RAGState], dict]:
     @log_node("generate")
-    def generate(state: RAGState) -> dict:
+    async def generate(state: RAGState) -> dict:
         chunks = state.get("chunks", [])
 
         if not chunks:
@@ -108,7 +108,7 @@ def make_generate_node(llm_service: LLMService) -> Callable[[RAGState], dict]:
             return {"answer": NO_CONTEXT_ANSWER, "sources": []}
 
         logger.info("Generating answer using %d chunk(s) as context", len(chunks))
-        answer_text = llm_service.generate_answer(question=state["query"], context=state["context"])
+        answer_text = await llm_service.agenerate_answer(question=state["query"], context=state["context"])
 
         sources = [
             {

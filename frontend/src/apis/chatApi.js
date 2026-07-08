@@ -1,24 +1,59 @@
-import httpClient from "./httpClient";
+import { BASE_URL } from "./httpClient";
+import { readSSEStream } from "./sse";
 
 /**
- * Chat API
- * Backend route: POST /chat
- */
-
-/**
- * Send a chat message to the RAG backend and return the AI answer.
+ * Chat API (streaming)
+ * Backend route: POST /chat  (Server-Sent Events)
  *
- * @param {string} query - The user's question.
- * @param {{role: "user"|"assistant", content: string}[]} [chat_history] - Prior turns, oldest first.
- * @param {string|null} [document_id] - Optionally restrict retrieval to a single document.
- * @param {number|null} [top_k] - Number of source chunks to retrieve (1–20).
- * @returns {Promise<{answer: string, sources: {text: string, source_file: string, score: number}[]}>}
+ * @param {string} query
+ * @param {{role: "user"|"assistant", content: string}[]} [chat_history]
+ * @param {string|null} [document_id]
+ * @param {number|null} [top_k]
+ * @param {object} handlers
+ * @param {(status: {step: string, phase: string, message: string, detail?: object}) => void} [handlers.onStatus]
+ * @param {(text: string) => void} [handlers.onToken] - text delta as it streams in
+ * @param {(result: {answer: string, sources: object[]}) => void} [handlers.onDone]
+ * @param {(detail: string) => void} [handlers.onError]
  */
-export async function sendChatMessage(query, chat_history = [], document_id = null, top_k = null) {
+export async function streamChatMessage(
+  query,
+  chat_history = [],
+  document_id = null,
+  top_k = null,
+  { onStatus, onToken, onDone, onError } = {}
+) {
   const payload = { query, chat_history };
   if (document_id !== null) payload.document_id = document_id;
   if (top_k !== null) payload.top_k = top_k;
 
-  const { data } = await httpClient.post("/chat", payload);
-  return data;
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    onError?.("Could not reach the server. Please check your connection.");
+    return;
+  }
+
+  if (!response.ok) {
+    let detail = "Something went wrong. Please try again.";
+    try {
+      const body = await response.json();
+      detail = body?.detail || detail;
+    } catch {
+      // response wasn't JSON — keep the fallback message
+    }
+    onError?.(detail);
+    return;
+  }
+
+  await readSSEStream(response, (eventName, data) => {
+    if (eventName === "status") onStatus?.(data);
+    else if (eventName === "token") onToken?.(data.text);
+    else if (eventName === "done") onDone?.(data);
+    else if (eventName === "error") onError?.(data.detail);
+  });
 }
