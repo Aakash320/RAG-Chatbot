@@ -31,3 +31,11 @@ python-dotenv==1.0.1
 pytest==8.3.4
 httpx==0.28.1              # used by FastAPI's TestClient
 posthog<3
+
+# ---Auth---
+sqlalchemy
+aiosqlite
+pyjwt
+passlib[argon2]
+email-validator
+python-multipart

@@ -1,28 +1,39 @@
-import React, {useState} from "react";
-import { Layout, Menu, Typography, Button, Tooltip} from "antd";
-import { MessageOutlined, FileTextOutlined, RobotFilled, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { Layout, Typography, Button, Tooltip, Flex, Dropdown, Avatar } from "antd";
+import {
+  FileTextOutlined,
+  RobotFilled,
+  UserOutlined,
+} from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ROUTES, NAV_ITEMS } from "../constants/routes";
+import { ROUTES } from "../constants/routes";
+import { useAuth } from "../context/AuthContext";
+import ChatHistorySidebar from "../components/chat/ChatHistorySidebar";
 
 const { Sider, Content, Header } = Layout;
-const { Title } = Typography;
-
-const ICONS_BY_ROUTE = {
-  [ROUTES.CHAT]: <MessageOutlined />,
-  [ROUTES.DOCUMENTS]: <FileTextOutlined />,
-};
-
-const menuItems = NAV_ITEMS.map((item) => ({ ...item, icon: ICONS_BY_ROUTE[item.key] }));
+const { Title, Text } = Typography;
 
 export default function AppLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate(ROUTES.LOGIN, { replace: true });
+  };
+
   const [collapsed, setCollapsed] = useState(false);
 
-  const selectedKey =
-    menuItems.find((item) => location.pathname.startsWith(item.key))?.key ??
-    ROUTES.CHAT;
+  const profileMenuItems = [
+    { key: "email", label: user?.email, disabled: true },
+    { key: "role", label: `Role: ${user?.role}`, disabled: true },
+    { type: "divider" },
+    { key: "profile", label: "Profile", onClick: () => navigate(ROUTES.PROFILE) },
+    { type: "divider" },
+    { key: "logout", label: "Log out", onClick: handleLogout },
+  ];
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -30,30 +41,57 @@ export default function AppLayout({ children }) {
         breakpoint="lg"
         collapsedWidth={0}
         theme="light"
-        width={220}
+        width={260}
         collapsible
         collapsed={collapsed}
         trigger={null}
       >
-        <div
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            height: 56,
-            display: "flex",
-            alignItems: "center",
-            paddingInline: 20,
-            cursor: "pointer",
-          }}
-        >
-          <RobotFilled style={{ fontSize: 18, background: "#cae5fdff", borderRadius: "20px", padding: "10px", marginLeft: 0, marginTop: 0 }} />
+        {/*
+          Sider wraps its children in its own internal div
+          (.ant-layout-sider-children), so a flex style on <Sider> itself
+          doesn't affect how *our* children stack. We create our own
+          full-height flex column here instead so the profile block can
+          stick to the bottom via marginTop: "auto".
+        */}
+        <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+          <div
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              height: 56,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              paddingInline: 20,
+              cursor: "pointer",
+            }}
+          >
+            <RobotFilled style={{ fontSize: 18, background: "#cae5fdff", borderRadius: "20px", padding: "10px", marginLeft: 0, marginTop: 0 }} />
+          </div>
+
+          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+            <ChatHistorySidebar />
+          </div>
+
+          <div style={{ flexShrink: 0, marginTop: "auto", borderTop: "1px solid #f0f0f0", padding: 12 }}>
+            <Dropdown menu={{ items: profileMenuItems }} trigger={["click"]} placement="topRight">
+              <Flex
+                align="center"
+                gap={10}
+                style={{ cursor: "pointer", padding: 8, borderRadius: 8 }}
+              >
+                <Avatar style={{ background: "#a6c7f5ff", flexShrink: 0 }} icon={<UserOutlined />} />
+                <div style={{ overflow: "hidden" }}>
+                  <Text ellipsis style={{ display: "block", maxWidth: 150 }}>
+                    {user?.full_name || user?.email}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {user?.role}
+                  </Text>
+                </div>
+              </Flex>
+            </Dropdown>
+          </div>
         </div>
-        <Menu
-          mode="inline"
-          theme="light"
-          selectedKeys={[selectedKey]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-        />
       </Sider>
       {collapsed && (
         <div
@@ -84,7 +122,6 @@ export default function AppLayout({ children }) {
           style={{
             background: "#fff",
             borderLeft: "1px solid #f2f2f2ff",
-            // border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -92,32 +129,29 @@ export default function AppLayout({ children }) {
             marginLeft: 5,
           }}
         >
-          {/* <Typography.Text strong>
-            {menuItems.find((item) => item.key === selectedKey)?.label}
-          </Typography.Text> */}
-
           <Title level={5} style={{ marginTop: 5 }}>
             RAG Chatbot
           </Title>
 
+          <Flex align="center" gap={12}>
             <Tooltip title="Documents">
-            <Button
-              type={location.pathname.startsWith(ROUTES.DOCUMENTS) ? "default" : "text"}
-              shape="rectangle"
-              icon={<FileTextOutlined style={{ fontSize: 18 }} />}
-              onClick={() =>
-                navigate(
-                  location.pathname.startsWith(ROUTES.DOCUMENTS) ? ROUTES.CHAT : ROUTES.DOCUMENTS
-                )
-              }
-              style={{border: "1px solid lightgray"}}
-            >
-              Docs
-            </Button>
-          </Tooltip>
-
+              <Button
+                type={location.pathname.startsWith(ROUTES.DOCUMENTS) ? "default" : "text"}
+                shape="rectangle"
+                icon={<FileTextOutlined style={{ fontSize: 18 }} />}
+                onClick={() =>
+                  navigate(
+                    location.pathname.startsWith(ROUTES.DOCUMENTS) ? ROUTES.CHAT : ROUTES.DOCUMENTS
+                  )
+                }
+                style={{ border: "1px solid lightgray" }}
+              >
+                Docs
+              </Button>
+            </Tooltip>
+          </Flex>
         </Header>
-        <Content style={{ paddingLeft: 5, paddingBottom:0, overflow: "auto" }}>{children}</Content>
+        <Content style={{ paddingLeft: 5, paddingBottom: 0, overflow: "auto" }}>{children}</Content>
       </Layout>
     </Layout>
   );

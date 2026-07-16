@@ -1,6 +1,9 @@
 export const ROUTES = {
   CHAT: "/chat",
   DOCUMENTS: "/documents",
+  PROFILE: "/profile",
+  LOGIN: "/login",
+  REGISTER: "/register",
 };
 
 export const NAV_ITEMS = [

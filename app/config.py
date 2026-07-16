@@ -19,8 +19,12 @@ class Settings(BaseSettings):
     # --- App / API ---
     APP_NAME: str = "RAG Chatbot"
     API_V1_PREFIX: str = "/api/v1"
+    
     # JSON list in .env, e.g. CORS_ORIGINS=["http://localhost:5173"]
-    CORS_ORIGINS: list[str] = ["*"]
+    # NOTE: cannot be ["*"] once allow_credentials=True (browsers reject
+    # wildcard-origin + credentials per the CORS spec) — must be explicit
+    # origins. Defaulting to the Vite dev server; override in .env.
+    CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 
     # --- File uploads ---
     UPLOAD_DIR: str = "data/uploads"
@@ -51,6 +55,17 @@ class Settings(BaseSettings):
     GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
     LLM_TEMPERATURE: float = 0.2
     LLM_MAX_TOKENS: int = 1024
+
+    # --- Database ---
+    DATABASE_URL: str = "sqlite+aiosqlite:///./data/app.db"
+
+    # --- Auth / JWT ---
+    JWT_SECRET_KEY: str = "CHANGE_ME_dev_only_secret"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
+    REFRESH_COOKIE_NAME: str = "refresh_token"
+    COOKIE_SECURE: bool = False  # set True in .env once you're serving over https
 
 
 @lru_cache

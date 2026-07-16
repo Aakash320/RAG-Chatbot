@@ -18,15 +18,20 @@ from app.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.state import build_app_state
 from app.core.logging_config import setup_logging
+from app.db.base import engine, init_db
 
 setup_logging()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Build the embedding model, vector store, LLM client and controllers once.
+    # Create DB tables if they don't exist yet (fine for SQLite/dev — swap
+    # for `alembic upgrade head` once real migrations are introduced).
+    await init_db()
     app.state.rag = build_app_state()
     yield
+    # Cleanly close all pooled DB connections before the process exits.
+    await engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -35,6 +40,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,  # required so the browser sends the refresh-token cookie
         allow_methods=["*"],
         allow_headers=["*"],
     )

@@ -4,8 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import get_chat_controller
-from app.controllers.chat_controller import ChatController
+from app.api.deps import get_chat_session_controller, get_current_user
+from app.controllers.chat_session_controller import ChatSessionController
+from app.db.models import User
 from app.models.schemas import ChatRequest
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -18,14 +19,16 @@ def _format_sse(event: str, data: dict) -> str:
 @router.post("")
 async def chat(
     request: ChatRequest,
-    controller: Annotated[ChatController, Depends(get_chat_controller)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    controller: Annotated[ChatSessionController, Depends(get_chat_session_controller)],
 ) -> StreamingResponse:
     async def event_generator():
-        async for item in controller.astream_answer(
-            request.query,
-            request.document_id,
-            request.top_k,
-            chat_history=[m.model_dump() for m in request.chat_history],
+        async for item in controller.stream_chat(
+            user_id=current_user.id,
+            query=request.query,
+            session_id=request.session_id,
+            document_id=request.document_id,
+            top_k=request.top_k,
         ):
             yield _format_sse(item["event"], item["data"])
 
@@ -35,6 +38,6 @@ async def chat(
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # disable proxy buffering (nginx etc.) if present
+            "X-Accel-Buffering": "no",
         },
     )

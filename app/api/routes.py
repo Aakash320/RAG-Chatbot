@@ -32,10 +32,12 @@ LLM work in a threadpool.
 """
 
 from fastapi import APIRouter
-from app.api.endpoints import documents, chat, health
+from app.api.endpoints import auth, chat, chat_sessions, documents, health
 
 router = APIRouter()
 
+router.include_router(auth.router)
+router.include_router(chat_sessions.router)
 router.include_router(documents.router)
 router.include_router(chat.router)
 router.include_router(health.router)

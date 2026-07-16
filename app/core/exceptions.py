@@ -56,6 +56,31 @@ class RetrievalError(AppError):
         super().__init__(f"Retrieval failed: {detail}", status_code=500)
 
 
+class InvalidCredentialsError(AppError):
+    def __init__(self) -> None:
+        super().__init__("Incorrect email or password", status_code=401)
+
+
+class EmailAlreadyRegisteredError(AppError):
+    def __init__(self, email: str) -> None:
+        super().__init__(f"An account with email '{email}' already exists", status_code=409)
+
+
+class AuthenticationError(AppError):
+    def __init__(self, detail: str = "Could not validate credentials") -> None:
+        super().__init__(detail, status_code=401)
+
+
+class AuthorizationError(AppError):
+    def __init__(self, detail: str = "You do not have access to this resource") -> None:
+        super().__init__(detail, status_code=403)
+
+
+class SessionNotFoundError(AppError):
+    def __init__(self, session_id: str) -> None:
+        super().__init__(f"Chat session '{session_id}' not found", status_code=404)
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
