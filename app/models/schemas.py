@@ -137,6 +137,24 @@ class RenameSessionRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
 
 
+# --- Web search fallback ---
+
+
+class WebSearchResult(BaseModel):
+    source_name: str
+    url: str
+    snippet: str
+
+
+class WebSearchResponse(BaseModel):
+    results: list[WebSearchResult]
+    context: str
+
+    @property
+    def found_results(self) -> bool:
+        return len(self.results) > 0
+
+
 # --- Health ---
 
 

@@ -29,15 +29,17 @@ from app.core.logging_config import log_section, new_request_id, truncate
 from app.graph.build import build_rag_graph
 from app.services.llm_service import LLMService
 from app.services.retrieval_service import RetrievalService
+from app.services.web_search_service import WebSearchService
 
 logger = logging.getLogger("rag.controller")
 
-_NODE_NAMES = {"detect_intent", "rewrite_query", "retrieve", "generate"}
+_NODE_NAMES = {"detect_intent", "rewrite_query", "retrieve", "web_search", "generate"}
 
 _START_MESSAGES = {
     "detect_intent": "Detecting whether this is a follow-up question...",
     "rewrite_query": "Rewriting follow-up into a standalone question...",
     "retrieve": "Searching the knowledge base...",
+    "web_search": "Nothing found locally — searching the web...",
     "generate": "Generating the answer...",
 }
 
@@ -78,6 +80,20 @@ def _end_status(node_name: str, output: dict) -> dict:
                 ]
             },
         }
+    
+    if node_name == "web_search":
+        results = output.get("web_search_results", [])
+        return {
+            "step": node_name,
+            "phase": "end",
+            "message": f"Found {len(results)} web result(s)" if results else "Web search found nothing",
+            "detail": {
+                "results": [
+                    {"source_name": r.source_name, "url": r.url}
+                    for r in results
+                ]
+            },
+        }
 
     if node_name == "generate":
         return {"step": node_name, "phase": "end", "message": "Answer generation complete"}
@@ -90,8 +106,9 @@ class ChatController:
         self,
         retrieval_service: RetrievalService,
         llm_service: LLMService,
+        web_search_service: WebSearchService,
     ) -> None:
-        self._graph = build_rag_graph(retrieval_service, llm_service)
+        self._graph = build_rag_graph(retrieval_service, llm_service, web_search_service)
 
     async def astream_answer(
         self,

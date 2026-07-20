@@ -13,6 +13,7 @@ const STEP_TITLES = {
   detect_intent: "Detecting intent",
   rewrite_query: "Rewriting query",
   retrieve: "Retrieving context",
+  web_search: "Searching the web",
   generate: "Generating answer",
 };
 
@@ -78,6 +79,26 @@ function StepDetail({ step, description, detail }) {
               <Text type="secondary" style={{ fontSize: 11 }}>
                 {c.text}
               </Text>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {step === "web_search" && detail?.results?.length > 0 && (
+        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+          {detail.results.map((r, idx) => (
+            <div key={idx} style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
+              <Tag style={{ margin: 0 }}>{r.source_name}</Tag>
+              {r.url && (
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: 11 }}
+                >
+                  {r.url}
+                </a>
+              )}
             </div>
           ))}
         </div>

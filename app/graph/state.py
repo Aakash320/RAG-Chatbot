@@ -13,6 +13,7 @@ filled in as the graph runs.
 
 from typing import TypedDict
 
+from app.models.schemas import WebSearchResult
 from app.vectorstores.base import RetrievedChunk
 
 
@@ -33,6 +34,13 @@ class RAGState(TypedDict, total=False):
     # Set by the `retrieve` node.
     chunks: list[RetrievedChunk]
     context: str
+
+    # Set by the `web_search` node (only runs when `retrieve` found no
+    # chunks). `web_search_used` distinguishes "ran and found nothing"
+    # from "didn't run" for the `generate` node's three-way branch.
+    web_search_used: bool
+    web_search_results: list[WebSearchResult]
+    web_search_context: str
 
     # Set by the `generate` node.
     answer: str

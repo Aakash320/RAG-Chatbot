@@ -8,9 +8,10 @@ pydantic-settings==2.7.0
 
 # --- LangChain (loaders, text splitter, prompt + chain composition) ---
 langchain==0.3.13
-langchain-core==0.3.28
+langchain-core==0.3.41
 langchain-community==0.3.13
 langchain-groq==0.2.2
+langchain-mcp-adapters==0.1.9
 
 # --- LangGraph
 langgraph

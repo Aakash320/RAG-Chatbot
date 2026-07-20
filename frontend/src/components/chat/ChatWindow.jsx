@@ -107,7 +107,8 @@ function MessageContent({ message }) {
         <Space size={[4, 4]} wrap style={{ marginTop: 8 }}>
           {message.sources.map((source, idx) => (
             <Tag key={idx} title={source.text}>
-              {source.source_file} · {Math.round(source.score * 100)}%
+              {source.source_file}
+              {source.score > 0 ? ` · ${Math.round(source.score * 100)}%` : ""}
             </Tag>
           ))}
         </Space>

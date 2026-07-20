@@ -56,6 +56,19 @@ class RetrievalError(AppError):
         super().__init__(f"Retrieval failed: {detail}", status_code=500)
 
 
+class WebSearchError(AppError):
+    """
+    Raised by WebSearchService / the MCP client on failure.
+
+    Deliberately NOT re-raised by the `web_search` graph node — a failed
+    fallback search should degrade to the "even web search failed" answer,
+    not 500 the whole request the way RetrievalError does.
+    """
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(f"Web search failed: {detail}", status_code=502)
+
+
 class InvalidCredentialsError(AppError):
     def __init__(self) -> None:
         super().__init__("Incorrect email or password", status_code=401)

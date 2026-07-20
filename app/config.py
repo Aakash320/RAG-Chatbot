@@ -56,6 +56,18 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.2
     LLM_MAX_TOKENS: int = 1024
 
+    # --- Web search fallback (MCP) ---
+    # Used when retrieval returns zero chunks. Today this points at Tavily's
+    # hosted remote MCP server; swapping to a self-hosted MCP server later
+    # only requires changing these values (see app/core/mcp/factory.py).
+    WEB_SEARCH_ENABLED: bool = True
+    TAVILY_API_KEY: str = ""
+    MCP_SERVER_URL: str = "https://mcp.tavily.com/mcp/"
+    MCP_TRANSPORT: str = "streamable_http"
+    MCP_SEARCH_TOOL_NAME: str = "tavily_search"
+    MCP_TIMEOUT_SECONDS: int = 15
+    WEB_SEARCH_MAX_RESULTS: int = 5
+
     # --- Database ---
     DATABASE_URL: str = "sqlite+aiosqlite:///./data/app.db"
 
