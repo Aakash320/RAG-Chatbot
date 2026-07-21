@@ -1,5 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { listSessions, deleteSession as deleteSessionApi } from "../apis/chatSessionApi";
+import {
+  listSessions,
+  deleteSession as deleteSessionApi,
+  renameSession as renameSessionApi,
+} from "../apis/chatSessionApi";
 import { useAuth } from "./AuthContext";
 
 const ChatHistoryContext = createContext(null);
@@ -39,7 +43,15 @@ export function ChatHistoryProvider({ children }) {
     setSessions((prev) => prev.filter((s) => s.id !== sessionId));
   }, []);
 
-  const value = { sessions, loading, refreshSessions, removeSession };
+  const renameSession = useCallback(async (sessionId, newTitle) => {
+    const updated = await renameSessionApi(sessionId, newTitle);
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, title: updated.title } : s))
+    );
+    return updated;
+  }, []);
+
+  const value = { sessions, loading, refreshSessions, removeSession, renameSession };
 
   return <ChatHistoryContext.Provider value={value}>{children}</ChatHistoryContext.Provider>;
 }

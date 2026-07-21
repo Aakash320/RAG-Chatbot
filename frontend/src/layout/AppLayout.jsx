@@ -134,21 +134,23 @@ export default function AppLayout({ children }) {
           </Title>
 
           <Flex align="center" gap={12}>
-            <Tooltip title="Documents">
-              <Button
-                type={location.pathname.startsWith(ROUTES.DOCUMENTS) ? "default" : "text"}
-                shape="rectangle"
-                icon={<FileTextOutlined style={{ fontSize: 18 }} />}
-                onClick={() =>
-                  navigate(
-                    location.pathname.startsWith(ROUTES.DOCUMENTS) ? ROUTES.CHAT : ROUTES.DOCUMENTS
-                  )
-                }
-                style={{ border: "1px solid lightgray" }}
-              >
-                Docs
-              </Button>
-            </Tooltip>
+            {user?.role?.toLowerCase() === "admin" && (
+              <Tooltip title="Documents">
+                <Button
+                  type={location.pathname.startsWith(ROUTES.DOCUMENTS) ? "default" : "text"}
+                  shape="rectangle"
+                  icon={<FileTextOutlined style={{ fontSize: 18 }} />}
+                  onClick={() =>
+                    navigate(
+                      location.pathname.startsWith(ROUTES.DOCUMENTS) ? ROUTES.CHAT : ROUTES.DOCUMENTS
+                    )
+                  }
+                  style={{ border: "1px solid lightgray" }}
+                >
+                  Docs
+                </Button>
+              </Tooltip>
+            )}
           </Flex>
         </Header>
         <Content style={{ paddingLeft: 5, paddingBottom: 0, overflow: "auto" }}>{children}</Content>
