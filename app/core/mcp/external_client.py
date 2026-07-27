@@ -14,6 +14,11 @@ Configured for Tavily's remote MCP server by default (see
 `app.config.settings.MCP_SERVER_URL`), but nothing here is Tavily-specific
 beyond the URL/API-key — pointing `MCP_SERVER_URL` at a different remote
 MCP server (including your own, later) is enough to switch providers.
+
+`api_key` is optional (defaults to ""): Tavily's hosted server needs one,
+appended as a query param, but a self-hosted server (e.g. the schedule
+MCP server) doesn't require auth at all, so an empty api_key simply
+skips that step instead of raising.
 """
 
 import json
@@ -30,8 +35,6 @@ from app.core.mcp.base import BaseMCPClient
 
 logger = logging.getLogger("rag.mcp")
 
-_SERVER_NAME = "web_search"
-
 
 class ExternalMCPClient(BaseMCPClient):
     """MCP client for a single remote, HTTP-based external MCP server."""
@@ -42,35 +45,38 @@ class ExternalMCPClient(BaseMCPClient):
         api_key: str = settings.TAVILY_API_KEY,
         transport: str = settings.MCP_TRANSPORT,
         timeout_seconds: int = settings.MCP_TIMEOUT_SECONDS,
+        server_name: str = "web_search",
+        api_key_query_param: str = "tavilyApiKey",
     ) -> None:
-        # Deliberately no validation / connection here. Web search is a
-        # fallback feature — a missing API key shouldn't crash app startup,
-        # only fail the (already-degraded) fallback path once it's actually
-        # reached. See get_tools() below for where that happens instead.
+        # Deliberately no validation / connection here. This is used on
+        # fallback/secondary paths — a missing config shouldn't crash app
+        # startup, only fail once the path is actually reached. See
+        # get_tools() below for where that happens instead.
         self._server_url = server_url
         self._api_key = api_key
         self._transport = transport
         self._timeout_seconds = timeout_seconds
+        self._server_name = server_name
+        self._api_key_query_param = api_key_query_param
         self._client: MultiServerMCPClient | None = None
         self._tools_cache: list[BaseTool] | None = None
 
     def _build_client(self) -> MultiServerMCPClient:
         if not self._server_url:
-            raise WebSearchError("MCP_SERVER_URL is not configured")
-        if not self._api_key:
-            raise WebSearchError("TAVILY_API_KEY is not configured")
+            raise WebSearchError(f"Server URL is not configured for '{self._server_name}'")
 
-        # Tavily's hosted MCP server authenticates via a query param on the
-        # endpoint URL itself rather than a header. If MCP_SERVER_URL is
-        # ever pointed at a different provider (or your own server) that
-        # doesn't need this, just set TAVILY_API_KEY="" and pass auth via
-        # headers instead — that's a one-line change here, not elsewhere.
-        separator = "&" if "?" in self._server_url else "?"
-        full_url = f"{self._server_url}{separator}tavilyApiKey={self._api_key}"
+        full_url = self._server_url
+        if self._api_key:
+            # Tavily's hosted MCP server authenticates via a query param on
+            # the endpoint URL itself rather than a header. Self-hosted
+            # servers that don't need auth just leave api_key empty and
+            # skip this entirely.
+            separator = "&" if "?" in self._server_url else "?"
+            full_url = f"{self._server_url}{separator}{self._api_key_query_param}={self._api_key}"
 
         return MultiServerMCPClient(
             {
-                _SERVER_NAME: {
+                self._server_name: {
                     "url": full_url,
                     "transport": self._transport,
                     "timeout": self._timeout_seconds,
@@ -83,11 +89,11 @@ class ExternalMCPClient(BaseMCPClient):
             self._client = self._build_client()
 
         if self._tools_cache is None:
-            logger.info("Discovering tools from MCP server '%s'", _SERVER_NAME)
+            logger.info("Discovering tools from MCP server '%s'", self._server_name)
             try:
-                self._tools_cache = await self._client.get_tools(server_name=_SERVER_NAME)
+                self._tools_cache = await self._client.get_tools(server_name=self._server_name)
             except Exception as exc:
-                logger.exception("Failed to discover tools from MCP server")
+                logger.exception("Failed to discover tools from MCP server '%s'", self._server_name)
                 raise WebSearchError(f"Could not connect to MCP server: {exc}") from exc
             logger.info(
                 "Discovered %d tool(s): %s",

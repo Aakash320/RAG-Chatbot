@@ -68,6 +68,13 @@ class Settings(BaseSettings):
     MCP_TIMEOUT_SECONDS: int = 15
     WEB_SEARCH_MAX_RESULTS: int = 5
 
+    # --- Schedule management (self-hosted MCP) ---
+    # Points at schedule_mcp_server/ (a sibling process, not part of this
+    # app) — see schedule_mcp_server/server.py for the tool definitions.
+    SCHEDULE_MCP_SERVER_URL: str = "http://127.0.0.1:8100/mcp"
+    SCHEDULE_MCP_TRANSPORT: str = "streamable_http"
+    SCHEDULE_MCP_TIMEOUT_SECONDS: int = 15
+
     # --- Database ---
     DATABASE_URL: str = "sqlite+aiosqlite:///./data/app.db"
 

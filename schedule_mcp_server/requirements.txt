@@ -1,0 +1,4 @@
+mcp>=1.28.0
+sqlalchemy>=2.0
+aiosqlite>=0.20
+pydantic-settings>=2.0

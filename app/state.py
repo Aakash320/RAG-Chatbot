@@ -18,11 +18,12 @@ from dataclasses import dataclass
 
 from app.controllers.chat_controller import ChatController
 from app.controllers.document_controller import DocumentController
-from app.core.mcp.factory import get_mcp_client
+from app.core.mcp.factory import get_mcp_client, get_schedule_mcp_client
 from app.services.embedding_service import get_embedding_service
 from app.services.ingestion_service import get_ingestion_service
 from app.services.llm_service import get_llm_service
 from app.services.retrieval_service import RetrievalService
+from app.services.schedule_service import ScheduleService
 from app.services.web_search_service import WebSearchService
 from app.vectorstores.base import BaseVectorStore
 from app.vectorstores.factory import get_vector_store_instance
@@ -46,10 +47,15 @@ def build_app_state() -> AppState:
     mcp_client = get_mcp_client()
     web_search_service = WebSearchService(mcp_client)
 
+    schedule_mcp_client = get_schedule_mcp_client()
+    schedule_service = ScheduleService(schedule_mcp_client)
+
     document_controller = DocumentController(
         ingestion_service, embedding_service, vector_store
     )
-    chat_controller = ChatController(retrieval_service, llm_service, web_search_service)
+    chat_controller = ChatController(
+        retrieval_service, llm_service, web_search_service, schedule_service
+    )
 
     return AppState(
         document_controller=document_controller,

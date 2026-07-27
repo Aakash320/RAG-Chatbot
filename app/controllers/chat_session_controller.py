@@ -62,7 +62,7 @@ class ChatSessionController:
         start = time.perf_counter()
 
         async for item in self._chat_controller.astream_answer(
-            query, document_id=document_id, top_k=top_k, chat_history=chat_history
+            query, user_id=user_id, document_id=document_id, top_k=top_k, chat_history=chat_history
         ):
             if item["event"] == "status":
                 collected_status.append(item["data"])
@@ -74,7 +74,7 @@ class ChatSessionController:
                     (
                         s["detail"]["is_followup"]
                         for s in collected_status
-                        if s["step"] == "detect_intent" and "detail" in s
+                        if s["step"] == "classify_followup" and "detail" in s
                     ),
                     None,
                 )
