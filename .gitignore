@@ -13,8 +13,10 @@ env/
 .env
 
 # Local data / persisted vector store
+data/
 data/chroma_db/
 data/uploads/
+data/*
 
 # Editor / OS
 .vscode/
