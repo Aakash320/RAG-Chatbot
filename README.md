@@ -65,6 +65,47 @@ The following tree diagram illustrates how a user's query flows through the Lang
   <img src="assets/graph.png" alt="LangGraph Workflow" width="700">
 </p>
 
+```mermaid
+graph TD
+    START([User Query Input]) --> Node1[detect_intent<br/>LLM Top-Level Routing]
+    
+    %% Intent Branching
+    Node1 -->|intent == 'qa'| Node2[classify_followup<br/>Analyze Chat History]
+    Node1 -->|intent == 'schedule'| Node3[classify_schedule<br/>Parse Parameters & Action]
+    Node1 -->|intent == 'unsupported'| Node4[unsupported_action<br/>Return Help Message]
+    
+    %% QA Branch
+    Node2 -->|is_followup == true| Node5[rewrite_query<br/>LLM Standalone Rewrite]
+    Node2 -->|is_followup == false| Node6[retrieve<br/>Local Vector Similarity Search]
+    Node5 --> Node6
+    
+    %% Retrieval conditional
+    Node6 -->|Chunks Found| Node7[generate<br/>LLM Answer Generation]
+    Node6 -->|No Chunks Found| Node8{Web Search<br/>Enabled?}
+    Node8 -->|Yes| Node9[web_search<br/>Tavily MCP Client Call]
+    Node8 -->|No| Node7
+    Node9 --> Node7
+    
+    %% Schedule Branch
+    Node3 -->|action == 'add'| Node10[schedule_add<br/>Write to SQLite via MCP]
+    Node3 -->|action == 'list'| Node11[schedule_list<br/>Read from SQLite via MCP]
+    
+    %% Terminal Outputs
+    Node7 --> END([Server-Sent Events Stream Output])
+    Node10 --> END
+    Node11 --> END
+    Node4 --> END
+    
+    %% Formatting Nodes
+    style START fill:#f3e8ff,stroke:#a855f7,stroke-width:2px;
+    style END fill:#dcfce7,stroke:#22c55e,stroke-width:2px;
+    style Node1 fill:#dbeafe,stroke:#3b82f6,stroke-width:2px;
+    style Node6 fill:#fef08a,stroke:#eab308,stroke-width:2px;
+    style Node9 fill:#fee2e2,stroke:#ef4444,stroke-width:2px;
+    style Node10 fill:#ffedd5,stroke:#f97316,stroke-width:2px;
+    style Node11 fill:#ffedd5,stroke:#f97316,stroke-width:2px;
+```
+
 ---
 
 ## 4. Startup & Running Guide
