@@ -71,6 +71,10 @@ Technical reference for the Agentic RAG Platform. This document covers every lay
 
 The platform runs as three independent processes that communicate over HTTP:
 
+<p align="center">
+  <img src="assets/architecture.png" alt="LangGraph Workflow" width="700">
+</p>
+
 ```mermaid
 graph LR
     subgraph "User's Browser"
