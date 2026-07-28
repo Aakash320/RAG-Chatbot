@@ -61,6 +61,10 @@ If the intent is classified as `schedule`, the LLM extracts structured parameter
 
 The following tree diagram illustrates how a user's query flows through the LangGraph state machine, highlighting the routing decisions and terminal endpoints.
 
+<p align="center">
+  <img src="assets/graph.png" alt="LangGraph Workflow" width="700">
+</p>
+
 ```mermaid
 graph TD
     START([User Query Input]) --> Node1[detect_intent<br/>LLM Top-Level Routing]
